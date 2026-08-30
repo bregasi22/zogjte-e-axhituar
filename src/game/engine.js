@@ -232,12 +232,14 @@ export function createGame(canvas, callbacks) {
 
     backgroundCanvas.width = canvas.width;
     backgroundCanvas.height = canvas.height;
-    drawLevelBackground(backgroundCtx, levelIdx, canvas.width, canvas.height, GROUND_Y(), {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawLevelBackground(ctx, levelIdx, canvas.width, canvas.height, GROUND_Y(), {
       drawCloud,
       drawRock,
       drawFlowers,
       drawSlingshot
     });
+    backgroundCtx.drawImage(canvas, 0, 0);
 
     emitStats();
     emitQueue();
