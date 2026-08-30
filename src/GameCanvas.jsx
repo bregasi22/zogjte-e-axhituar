@@ -5,6 +5,7 @@ import Leaderboard from './Leaderboard.jsx';
 import './GameCanvas.css';
 
 export default function GameCanvas({ playerName, onExit }) {
+  const frameRef = useRef(null);
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
   const scoreRef = useRef(0);
@@ -54,13 +55,30 @@ export default function GameCanvas({ playerName, onExit }) {
   }, []);
 
   useEffect(() => {
+    const frame = frameRef.current;
+    const updateScale = () => {
+      const scale = frame.clientWidth / 800;
+      if (!scale) return;
+
+      frame.style.setProperty('--ui-scale', String(scale));
+    };
+    const observer = new ResizeObserver(updateScale);
+
+    updateScale();
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (score <= highScore) return;
     setHighScore(score);
     localStorage.setItem('zogjte-high-score', String(score));
   }, [score, highScore]);
 
   return (
-    <div className="game-frame">
+    <div className="game-frame" ref={frameRef}>
+      <canvas ref={canvasRef} />
+      <div className="game-ui">
       <div className="score-board" aria-label={`Rezultati ${score}, rekordi ${Math.max(highScore, score)}`}>
         <div className="score-row"><span>HIGHSCORE:</span><strong>{Math.max(highScore, score)}</strong></div>
         <div className="score-row"><span>SCORE:</span><strong>{score}</strong></div>
@@ -151,7 +169,7 @@ export default function GameCanvas({ playerName, onExit }) {
       )}
       {leaderboard.length > 0 && <Leaderboard scores={leaderboard} onPlayAgain={onExit} />}
       {showBirdGuide && <BirdGuide onClose={() => setShowBirdGuide(false)} />}
-      <canvas ref={canvasRef} />
+      </div>
     </div>
   );
 }

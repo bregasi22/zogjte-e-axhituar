@@ -439,7 +439,129 @@ function drawSchoolBackground(ctx, W, H, gy, helpers) {
   drawSlingshot(gy);
 }
 
+function drawVolcanoBackground(ctx, W, H, gy, helpers) {
+  const { drawSlingshot } = helpers;
+  const sky = ctx.createLinearGradient(0, 0, 0, gy);
+  sky.addColorStop(0, '#38265f');
+  sky.addColorStop(0.55, '#bc5360');
+  sky.addColorStop(1, '#f0a259');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#49334b';
+  ctx.beginPath();
+  ctx.moveTo(300, gy);
+  ctx.lineTo(430, gy - 290);
+  ctx.lineTo(560, gy);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#251f32';
+  ctx.beginPath();
+  ctx.moveTo(390, gy - 202);
+  ctx.lineTo(430, gy - 290);
+  ctx.lineTo(470, gy - 202);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#ffcb55';
+  ctx.lineWidth = 9;
+  [[400, gy - 118, 420, gy - 44], [458, gy - 140, 482, gy - 50], [432, gy - 236, 446, gy - 198]].forEach(points => {
+    ctx.beginPath();
+    ctx.moveTo(points[0], points[1]);
+    ctx.lineTo(points[2], points[3]);
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = '#3a2422';
+  ctx.fillRect(0, gy, W, H - gy);
+  ctx.fillStyle = '#e8642e';
+  ctx.fillRect(0, gy, W, 9);
+  drawSlingshot(gy);
+}
+
+function drawMoonlightBackground(ctx, W, H, gy, helpers) {
+  const { drawSlingshot } = helpers;
+  const sky = ctx.createLinearGradient(0, 0, 0, gy);
+  sky.addColorStop(0, '#122545');
+  sky.addColorStop(1, '#4d7597');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#fff2ba';
+  ctx.beginPath();
+  ctx.arc(W * 0.72, 92, 48, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#d9c982';
+  [[W * 0.69, 78, 8], [W * 0.76, 108, 6], [W * 0.78, 65, 5]].forEach(([x, y, radius]) => {
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.fillStyle = '#243f52';
+  [80, 188, 670, 755].forEach((x, index) => {
+    ctx.beginPath();
+    ctx.moveTo(x - 72, gy);
+    ctx.lineTo(x, gy - 90 - index % 2 * 35);
+    ctx.lineTo(x + 72, gy);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.fillStyle = '#314e42';
+  ctx.fillRect(0, gy, W, H - gy);
+  ctx.fillStyle = '#6fa25a';
+  ctx.fillRect(0, gy, W, 8);
+  drawSlingshot(gy);
+}
+
+function drawMarshBackground(ctx, W, H, gy, helpers) {
+  const { drawCloud, drawSlingshot } = helpers;
+  const sky = ctx.createLinearGradient(0, 0, 0, gy);
+  sky.addColorStop(0, '#5eabc0');
+  sky.addColorStop(1, '#b6e4c6');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+  drawCloud(130, 70, 0.65);
+  drawCloud(610, 102, 0.8);
+  ctx.fillStyle = '#4d8762';
+  [95, 210, 650, 742].forEach((x, index) => {
+    ctx.fillRect(x, gy - 106 - index % 2 * 26, 7, 112 + index % 2 * 26);
+    ctx.beginPath();
+    ctx.ellipse(x + 16, gy - 108 - index % 2 * 26, 23, 9, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  const water = ctx.createLinearGradient(0, gy - 28, 0, H);
+  water.addColorStop(0, '#4faeb6');
+  water.addColorStop(1, '#21788b');
+  ctx.fillStyle = water;
+  ctx.fillRect(0, gy - 20, W, H - gy + 20);
+  ctx.fillStyle = '#74ad4a';
+  [285, 380, 505, 600].forEach(x => {
+    ctx.beginPath();
+    ctx.ellipse(x, gy + 18, 34, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  drawSlingshot(gy);
+}
+
 export function drawLevelBackground(ctx, levelIdx, W, H, gy, helpers) {
+  const level = [
+    'coast', 'pyramid', 'fortress', 'desert', 'floating', 'cliff', 'volcano', 'moonlight', 'marsh', 'school'
+  ][levelIdx];
+
+  if (level === 'volcano') {
+    drawVolcanoBackground(ctx, W, H, gy, helpers);
+    return;
+  }
+
+  if (level === 'moonlight') {
+    drawMoonlightBackground(ctx, W, H, gy, helpers);
+    return;
+  }
+
+  if (level === 'marsh') {
+    drawMarshBackground(ctx, W, H, gy, helpers);
+    return;
+  }
+
   if (levelIdx === 1) {
     drawPyramidBackground(ctx, W, H, gy, helpers);
     return;
@@ -465,7 +587,7 @@ export function drawLevelBackground(ctx, levelIdx, W, H, gy, helpers) {
     return;
   }
 
-  if (levelIdx === 6) {
+  if (levelIdx === 9) {
     drawSchoolBackground(ctx, W, H, gy, helpers);
     return;
   }

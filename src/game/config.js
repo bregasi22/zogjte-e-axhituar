@@ -55,6 +55,36 @@ export const LEVELS = [
     sequence: ['pelican', 'heron', 'flamingo', 'pelican', 'heron', 'flamingo', 'pelican', 'flamingo']
   },
   {
+    volcano: true,
+    towers: [
+      { x: 0.53, style: 'wood', tier: 1, look: 2 },
+      { x: 0.74, style: 'ice', tier: 0, look: 4 },
+      { x: 0.91, style: 'wood', tier: 1, look: 0 }
+    ],
+    tnt: [0.64],
+    sequence: ['pelican', 'flamingo', 'heron', 'flamingo', 'pelican', 'heron', 'flamingo']
+  },
+  {
+    moonlight: true,
+    towers: [
+      { x: 0.49, style: 'ice', tier: 0, look: 5 },
+      { x: 0.67, style: 'wood', tier: 1, look: 1 },
+      { x: 0.88, style: 'ice', tier: 1, look: 6 }
+    ],
+    tnt: [0.77],
+    sequence: ['heron', 'flamingo', 'pelican', 'heron', 'flamingo', 'pelican', 'flamingo', 'heron']
+  },
+  {
+    marsh: true,
+    towers: [
+      { x: 0.55, style: 'wood', tier: 0, look: 3 },
+      { x: 0.76, style: 'ice', tier: 1, look: 0 },
+      { x: 0.93, style: 'wood', tier: 0, look: 5 }
+    ],
+    tnt: [0.67, 0.85],
+    sequence: ['flamingo', 'heron', 'pelican', 'flamingo', 'heron', 'pelican', 'flamingo', 'pelican']
+  },
+  {
     school: true,
     tnt: [],
     sequence: ['flamingo', 'pelican', 'heron', 'flamingo', 'pelican', 'heron', 'flamingo', 'pelican', 'heron']

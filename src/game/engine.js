@@ -26,6 +26,8 @@ import {
 
 export function createGame(canvas, callbacks) {
   const ctx = canvas.getContext('2d');
+  const backgroundCanvas = document.createElement('canvas');
+  const backgroundCtx = backgroundCanvas.getContext('2d');
 
   canvas.width = CANVAS_W;
   canvas.height = CANVAS_H;
@@ -48,6 +50,9 @@ export function createGame(canvas, callbacks) {
   let trajectoryDots = [];
   let pendingAction = null;
   let rafId = null;
+  let lastFrameTime = null;
+  let physicsAccumulator = 0;
+  const PHYSICS_STEP_MS = 1000 / 60;
 
   // ---------- UI bridge ----------
 
@@ -141,7 +146,11 @@ export function createGame(canvas, callbacks) {
       hp: 1,
       falling: false,
       hitCooldown: 0,
-      resting: false
+      resting: false,
+      rotation: 0,
+      angularVelocity: 0,
+      supportBlock: null,
+      fallStartY: null
     };
   }
 
@@ -173,7 +182,10 @@ export function createGame(canvas, callbacks) {
       style,
       hp,
       maxHp: hp,
+      vx: 0,
       vy: 0,
+      rotation: 0,
+      angularVelocity: 0,
       broken: false,
       anchored: false
     };
@@ -192,6 +204,14 @@ export function createGame(canvas, callbacks) {
       makePolitician
     ));
 
+    politicians.forEach(p => {
+      const footY = p.y + p.h;
+      p.supportBlock = blocks.find(b =>
+        Math.min(b.x + b.w, p.x + p.w) - Math.max(b.x, p.x) >= p.w / 2 &&
+        Math.abs(b.y - footY) <= 1
+      ) || null;
+    });
+
     birdQueue = [...L.sequence];
 
     const firstType =
@@ -209,6 +229,15 @@ export function createGame(canvas, callbacks) {
 
     gameState = 'aim';
     levelComplete = false;
+
+    backgroundCanvas.width = canvas.width;
+    backgroundCanvas.height = canvas.height;
+    drawLevelBackground(backgroundCtx, levelIdx, canvas.width, canvas.height, GROUND_Y(), {
+      drawCloud,
+      drawRock,
+      drawFlowers,
+      drawSlingshot
+    });
 
     emitStats();
     emitQueue();
@@ -633,6 +662,10 @@ export function createGame(canvas, callbacks) {
     ctx.save();
     const { x, y, w, h } = b;
 
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.rotate(b.rotation || 0);
+    ctx.translate(-x - w / 2, -y - h / 2);
+
     if (b.style === 'apple') {
       ctx.fillStyle = '#d9302d';
       ctx.beginPath();
@@ -946,6 +979,21 @@ export function createGame(canvas, callbacks) {
     emitStats();
   }
 
+  function eliminateFallenPolitician(p) {
+    p.alive = false;
+    score += 500;
+
+    createBurst(
+      particles,
+      p.x + p.w / 2,
+      p.y + p.h / 2,
+      '#c0392b'
+    );
+
+    emitStats();
+    checkLevelWin();
+  }
+
   // TNT detonates on impact, damaging nearby blocks
   // and politicians.
   function explodeTnt(b) {
@@ -1239,30 +1287,77 @@ export function createGame(canvas, callbacks) {
         p.hitCooldown -= 1;
       }
 
-      if (
-        !p.alive ||
-        !p.falling ||
-        p.resting
-      ) {
-        return;
+      if (!p.alive) return;
+
+      const footY = p.y + p.h;
+      const supportChanged =
+        p.supportBlock &&
+        (
+          p.supportBlock.broken ||
+          Math.abs(p.supportBlock.y - footY) > 1
+        );
+
+      if (supportChanged) {
+        p.falling = true;
+        p.resting = false;
+        if (p.fallStartY == null) p.fallStartY = p.y;
+        if (!p.angularVelocity) p.angularVelocity = p.look % 2 ? 0.04 : -0.04;
       }
+
+      if (!p.falling || p.resting) return;
 
       p.vy += GRAVITY;
       p.x += p.vx;
       p.y += p.vy;
 
       p.vx *= 0.92;
+      p.rotation = Math.max(-0.65, Math.min(0.65, p.rotation + p.angularVelocity));
+      p.angularVelocity *= 0.98;
 
       const bottom =
         p.y + p.h;
 
-      if (
-        bottom >
-        GROUND_Y()
-      ) {
-        p.y =
-          GROUND_Y() -
-          p.h;
+      const landingBlock = blocks
+        .filter(b =>
+          !b.broken &&
+          Math.min(b.x + b.w, p.x + p.w) - Math.max(b.x, p.x) >= p.w / 2 &&
+          b.y >= footY - 3 &&
+          b.y <= bottom
+        )
+        .sort((first, second) => first.y - second.y)[0];
+
+      if (landingBlock) {
+        if (landingBlock.style === 'tnt') {
+          explodeTnt(landingBlock);
+          return;
+        }
+
+        const landingY = landingBlock.y - p.h;
+
+        if (p.fallStartY != null && landingY - p.fallStartY >= 72) {
+          p.y = landingY;
+          eliminateFallenPolitician(p);
+          return;
+        }
+
+        p.y = landingY;
+        p.vy = 0;
+        p.vx = 0;
+        p.angularVelocity = 0;
+        p.resting = true;
+        p.supportBlock = landingBlock;
+        p.fallStartY = null;
+
+      } else if (bottom > GROUND_Y()) {
+        const landingY = GROUND_Y() - p.h;
+
+        if (p.fallStartY != null && landingY - p.fallStartY >= 72) {
+          p.y = landingY;
+          eliminateFallenPolitician(p);
+          return;
+        }
+
+        p.y = landingY;
 
         p.vy *= -0.25;
         p.vx *= 0.8;
@@ -1273,7 +1368,10 @@ export function createGame(canvas, callbacks) {
         ) {
           p.vy = 0;
           p.vx = 0;
+          p.angularVelocity = 0;
           p.resting = true;
+          p.supportBlock = null;
+          p.fallStartY = null;
         }
       }
     });
@@ -1319,6 +1417,13 @@ export function createGame(canvas, callbacks) {
       b.vy =
         (b.vy || 0) +
         GRAVITY;
+      if (!b.vx) b.vx = b.x + b.w / 2 < canvas.width / 2 ? -0.35 : 0.35;
+      if (!b.angularVelocity) b.angularVelocity = b.vx * 0.012;
+
+      b.x += b.vx;
+      b.vx *= 0.985;
+      b.rotation = Math.max(-0.5, Math.min(0.5, b.rotation + b.angularVelocity));
+      b.angularVelocity *= 0.99;
 
       const nFoot =
         b.y +
@@ -1362,6 +1467,8 @@ export function createGame(canvas, callbacks) {
           b.h;
 
         b.vy = 0;
+        b.vx = 0;
+        b.angularVelocity = 0;
 
       } else if (
         landY != null
@@ -1371,6 +1478,8 @@ export function createGame(canvas, callbacks) {
           b.h;
 
         b.vy = 0;
+        b.vx = 0;
+        b.angularVelocity = 0;
 
       } else {
         b.y += b.vy;
@@ -1726,7 +1835,7 @@ export function createGame(canvas, callbacks) {
 
   // ---------- Main loop ----------
 
-  function loop() {
+  function loop(frameTime) {
     ctx.clearRect(
       0,
       0,
@@ -1734,12 +1843,7 @@ export function createGame(canvas, callbacks) {
       canvas.height
     );
 
-    drawLevelBackground(ctx, levelIdx, canvas.width, canvas.height, GROUND_Y(), {
-      drawCloud,
-      drawRock,
-      drawFlowers,
-      drawSlingshot
-    });
+    ctx.drawImage(backgroundCanvas, 0, 0);
 
     if (
       currentBird &&
@@ -1799,7 +1903,17 @@ export function createGame(canvas, callbacks) {
 
     renderParticles(ctx, particles);
 
-    updatePhysics();
+    const elapsed = lastFrameTime == null
+      ? PHYSICS_STEP_MS
+      : Math.min(frameTime - lastFrameTime, PHYSICS_STEP_MS * 4);
+
+    lastFrameTime = frameTime;
+    physicsAccumulator += elapsed;
+
+    while (physicsAccumulator >= PHYSICS_STEP_MS) {
+      updatePhysics();
+      physicsAccumulator -= PHYSICS_STEP_MS;
+    }
 
     rafId =
       requestAnimationFrame(
@@ -1809,7 +1923,7 @@ export function createGame(canvas, callbacks) {
 
   buildLevel(0);
 
-  loop();
+  loop(performance.now());
 
   function destroy() {
     cancelAnimationFrame(

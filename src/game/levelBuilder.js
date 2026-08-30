@@ -16,7 +16,17 @@ function buildTower(blocks, politicians, makeBlock, makePolitician, cx, baseY, s
   const beamWidth = gap * 2 + pillarWidth * 2;
   blocks.push(makeBlock(cx - gap - pillarWidth, beamY, beamWidth, pillarWidth, style));
   blocks.push(makeBlock(cx - gap - pillarWidth, beamY - 18, beamWidth, 18, style === 'ice' ? 'iceroof' : 'roof'));
-  politicians.push(makePolitician(cx - 29, floorY - 58, 58, 58, look == null ? politicians.length : look));
+  const politicianLook = look == null ? politicians.length : look;
+
+  if (politicianLook === 0) {
+    const platformY = floorY - 12;
+    const platform = makeBlock(cx - 36, platformY, 72, 12, 'ice');
+    platform.anchored = true;
+    blocks.push(platform);
+    politicians.push(makePolitician(cx - 29, platformY - 58, 58, 58, politicianLook));
+  } else {
+    politicians.push(makePolitician(cx - 29, floorY - 58, 58, 58, politicianLook));
+  }
 }
 
 function buildPyramid(blocks, politicians, makeBlock, makePolitician, baseY) {
@@ -236,5 +246,20 @@ export function buildLevelStructures(level, canvasWidth, baseY, makeBlock, makeP
   }
 
   (level.tnt || []).forEach(x => buildTntStack(blocks, makeBlock, x * canvasWidth, baseY));
+
+  politicians.forEach(politician => {
+    const footY = politician.y + politician.h;
+    const hasPlatform = blocks.some(block =>
+      Math.min(block.x + block.w, politician.x + politician.w) - Math.max(block.x, politician.x) >= politician.w / 2 &&
+      Math.abs(block.y - footY) <= 1
+    );
+
+    if (footY < baseY - 1 && !hasPlatform) {
+      const platform = makeBlock(politician.x - 4, footY, politician.w + 8, 12, 'ice');
+      platform.anchored = true;
+      blocks.push(platform);
+    }
+  });
+
   return { blocks, politicians };
 }

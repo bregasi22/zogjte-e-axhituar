@@ -1,5 +1,6 @@
 .game-frame {
   position: relative;
+  --ui-scale: 1;
   width: 1000px;
   max-width: 96vw;
   aspect-ratio: 8 / 5;
@@ -14,6 +15,20 @@
   width: 100%;
   height: 100%;
 }
+
+.game-frame .game-ui {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 800px;
+  height: 500px;
+  pointer-events: none;
+  transform: scale(var(--ui-scale));
+  transform-origin: top left;
+}
+
+.game-frame .game-ui button,
+.game-frame .game-ui [role='dialog'] { pointer-events: auto; }
 
 .game-frame .score-board {
   position: absolute; top: 12px; right: 14px; z-index: 10;
@@ -228,31 +243,6 @@
 
 @media (max-width: 680px) {
   .game-frame { width: 100%; max-width: 100vw; margin: 0; border-radius: 0; }
-  .game-frame .score-board { top: 7px; right: 8px; font-size: 11px; text-shadow: 1px 1px 0 #172330, -1px -1px 0 #172330; }
-  .game-frame .score-row { gap: 5px; }.game-frame .score-row strong { min-width: 32px; }
-  .game-frame .hud { transform: scale(.72); transform-origin: top left; }
-  .game-frame .restart { right: 8px; bottom: 8px; width: 40px; height: 40px; border-width: 2px; font-size: 29px; line-height: 34px; }
-  .game-frame .bird-guide-button { right: 8px; bottom: 55px; width: 36px; height: 36px; border-width: 2px; font-size: 19px; }
-  .game-frame .bird-guide-backdrop { padding: 10px; }
-  .game-frame .bird-guide { width: 100%; padding: 14px 8px 10px; border-width: 3px; }
-  .game-frame .guide-roster { gap: 5px; }
-  .game-frame .guide-card { padding: 4px; border-width: 3px; }
-  .game-frame .guide-portrait { height: 76px; border-width: 2px; }
-  .game-frame .guide-details { padding: 5px 1px 0; }
-  .game-frame .guide-details h4 { margin-top: 3px; }
-  .game-frame .guide-details p { font-size: 7px; }
-  .game-frame .guide-details .guide-fact { display: none; }
-  .game-frame .guide-ribbon { min-width: 52px; padding: 3px 4px; font-size: 7px; }
-  .game-frame .guide-close { width: 28px; height: 28px; font-size: 24px; }
-  .game-frame .tip-backdrop, .game-frame .result-backdrop { padding: 10px; }
-  .game-frame .tip-dialog { grid-template-columns: 1fr; width: 100%; min-height: 0; border-width: 3px; }
-  .game-frame .tip-copy { padding: 25px 22px 20px; }.game-frame .tip-accent { display: none; }
-  .game-frame .tip-copy h2 { font-size: 23px; }.game-frame .tips-table { font-size: 10px; }
-  .game-frame .tips-table th, .game-frame .tips-table td { padding: 6px 4px; }
-  .game-frame .tip-close { top: -12px; right: -12px; width: 42px; height: 42px; border-width: 3px; font-size: 32px; line-height: 32px; }
-  .game-frame .result-dialog { width: min(330px, 94%); border-width: 3px; }
-  .game-frame .result-copy { padding: 22px 16px; }.game-frame .result-score { font-size: 54px; }
-  .game-frame .result-actions { width: 100%; gap: 7px; }.game-frame .result-actions button { flex: 1; min-width: 0; padding: 9px 6px 8px; font-size: 16px; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
