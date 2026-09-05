@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createGame, BIRD_TYPES } from './game/engine.js';
 import BirdGuide from './BirdGuide.jsx';
 import Leaderboard from './Leaderboard.jsx';
+import { fetchLeaderboard, saveScore } from './leaderboardService.js';
 import './GameCanvas.css';
 
 export default function GameCanvas({ playerName, onExit }) {
@@ -30,6 +31,18 @@ export default function GameCanvas({ playerName, onExit }) {
     const scores = [...savedScores, { name: playerName, score: finalScore }].sort((first, second) => second.score - first.score).slice(0, 10);
     localStorage.setItem('zogjte-leaderboard', JSON.stringify(scores));
     setLeaderboard(scores);
+
+    void (async () => {
+      try {
+        const savedOnline = await saveScore(playerName, finalScore);
+        if (!savedOnline) return;
+
+        const onlineScores = await fetchLeaderboard();
+        if (onlineScores) setLeaderboard(onlineScores);
+      } catch (error) {
+        console.error('Unable to save the online leaderboard score.', error);
+      }
+    })();
   }
 
   useEffect(() => {

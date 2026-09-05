@@ -20,10 +20,14 @@ React 60 herë/sekondë do ta ngadalësonte dhe komplikonte pa nevojë. React p�
 për UI-në sipër canvas-it (pikët, niveli, radha e zogjve, mesazhet), të cilën motori i
 lojës e njofton përmes një grupi "callbacks".
 
-**Shënim për "Node":** këtu Node.js e ekzekuton vetëm serverin e zhvillimit (Vite) dhe
-ndërtimin final — nuk ka backend/server API, sepse loja nuk ka nevojë të ruajë të dhëna
-(s'ka leaderboard online, llogari, etj). Nëse do shtojmë një server real (p.sh. Express)
-për rezultate të ruajtura online, mund ta shtoj lehtë më vonë.
+## Supabase leaderboard
+
+1. Krijo një projekt në Supabase.
+2. Hap SQL Editor dhe ekzekuto përmbajtjen e `supabase/schema.sql`.
+3. Krijo një skedar `.env.local` nga `.env.example` dhe vendos `VITE_SUPABASE_URL` dhe `VITE_SUPABASE_ANON_KEY` nga Project Settings > API.
+4. Rinis `npm run dev`.
+
+Rezultatet e përfunduara ruhen në leaderboard-in online. Pa këto variabla, loja vazhdon të përdorë leaderboard-in lokal të shfletuesit.
 
 ## Si të nisësh
 

@@ -37,6 +37,7 @@ export function createGame(canvas, callbacks) {
   const SLING_Y = () => GROUND_Y() - 90;
 
   let score = 0;
+  let levelStartScore = 0;
   let levelIdx = 0;
   let birdsLeft = 0;
   let birdQueue = [];
@@ -191,7 +192,13 @@ export function createGame(canvas, callbacks) {
     };
   }
 
-  function buildLevel(idx) {
+  function isStableSupport(block) {
+    return !block.broken && Math.abs(block.rotation || 0) < 0.08;
+  }
+
+  function buildLevel(idx, isRestart = false) {
+    if (!isRestart) levelStartScore = score;
+
     levelIdx = idx;
 
     const L = LEVELS[idx];
@@ -207,6 +214,7 @@ export function createGame(canvas, callbacks) {
     politicians.forEach(p => {
       const footY = p.y + p.h;
       p.supportBlock = blocks.find(b =>
+        isStableSupport(b) &&
         Math.min(b.x + b.w, p.x + p.w) - Math.max(b.x, p.x) >= p.w / 2 &&
         Math.abs(b.y - footY) <= 1
       ) || null;
@@ -252,7 +260,8 @@ export function createGame(canvas, callbacks) {
   // matching the Angry-Birds style structures in the reference art.
 
   function restart() {
-    buildLevel(levelIdx);
+    score = levelStartScore;
+    buildLevel(levelIdx, true);
   }
 
   function confirmMessage(action) {
@@ -262,7 +271,8 @@ export function createGame(canvas, callbacks) {
       buildLevel(levelIdx + 1);
 
     } else if (action === 'retry') {
-      buildLevel(levelIdx);
+      score = levelStartScore;
+      buildLevel(levelIdx, true);
 
     } else if (action === 'finish') {
       score = 0;
@@ -1296,6 +1306,7 @@ export function createGame(canvas, callbacks) {
         p.supportBlock &&
         (
           p.supportBlock.broken ||
+          !isStableSupport(p.supportBlock) ||
           Math.abs(p.supportBlock.y - footY) > 1
         );
 
@@ -1321,7 +1332,7 @@ export function createGame(canvas, callbacks) {
 
       const landingBlock = blocks
         .filter(b =>
-          !b.broken &&
+          isStableSupport(b) &&
           Math.min(b.x + b.w, p.x + p.w) - Math.max(b.x, p.x) >= p.w / 2 &&
           b.y >= footY - 3 &&
           b.y <= bottom
@@ -1402,7 +1413,7 @@ export function createGame(canvas, callbacks) {
       const supported =
         blocks.some(o =>
           o !== b &&
-          !o.broken &&
+          isStableSupport(o) &&
           o.y >= footY - 2 &&
           o.y <= footY + 3 &&
           o.x <
@@ -1437,7 +1448,7 @@ export function createGame(canvas, callbacks) {
       blocks.forEach(o => {
         if (
           o === b ||
-          o.broken
+          !isStableSupport(o)
         ) {
           return;
         }
